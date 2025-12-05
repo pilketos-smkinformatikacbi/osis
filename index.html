@@ -1,0 +1,404 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>🗳️ Pilketos Online</title>
+    
+    <style>
+        :root {
+            --primary-color: #0056b3; 
+            --secondary-color: #f0f0f0; 
+            --text-color: #333;
+            --success-color: #28a745;
+            --error-color: #dc3545;
+            --border-radius-soft: 8px;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: var(--secondary-color);
+            color: var(--text-color);
+            margin: 0;
+            padding: 20px;
+            display: flex;
+            justify-content: center;
+            align-items: flex-start;
+            min-height: 100vh;
+        }
+
+        .container {
+            width: 100%;
+            max-width: 700px;
+            background: white;
+            padding: 30px;
+            border-radius: var(--border-radius-soft);
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+        }
+
+        h2, h3 {
+            color: var(--primary-color);
+            text-align: center;
+            margin-bottom: 20px;
+        }
+
+        #status-message {
+            text-align: center;
+            margin-bottom: 20px;
+            padding: 10px;
+            border-radius: 4px;
+            font-weight: bold;
+        }
+        .status-error { background-color: #f8d7da; color: var(--error-color); border: 1px solid var(--error-color); }
+        .status-success { background-color: #d4edda; color: var(--success-color); border: 1px solid var(--success-color); }
+
+        input[type="text"] {
+            width: calc(100% - 20px);
+            padding: 12px 10px;
+            margin-bottom: 15px;
+            border: 1px solid #ccc;
+            border-radius: var(--border-radius-soft);
+            box-sizing: border-box;
+            font-size: 16px;
+        }
+
+        button {
+            background-color: var(--primary-color);
+            color: white;
+            padding: 12px 20px;
+            border: none;
+            border-radius: var(--border-radius-soft);
+            cursor: pointer;
+            font-size: 16px;
+            transition: background-color 0.3s;
+            width: 100%;
+            margin-top: 10px;
+        }
+
+        button:hover {
+            background-color: #004085;
+        }
+        
+        .kandidat-container {
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+            margin-bottom: 25px;
+        }
+
+        .kandidat-item {
+            display: flex;
+            align-items: flex-start;
+            border: 1px solid #ddd;
+            border-radius: var(--border-radius-soft);
+            padding: 15px;
+            transition: all 0.3s;
+            background-color: #f9f9f9;
+        }
+
+        .kandidat-item.selected {
+            border: 2px solid var(--success-color);
+            background-color: #e6ffed;
+            box-shadow: 0 0 8px rgba(40, 167, 69, 0.4);
+        }
+
+        .kandidat-input {
+            flex-shrink: 0;
+            margin-right: 15px;
+            padding-top: 5px;
+        }
+
+        .kandidat-item input[type="radio"] {
+            transform: scale(1.5);
+            cursor: pointer;
+        }
+
+        .foto-kandidat {
+            width: 90px;
+            height: 120px;
+            border-radius: var(--border-radius-soft); 
+            object-fit: cover; 
+            margin-right: 20px;
+            border: 3px solid #ccc;
+            flex-shrink: 0;
+        }
+
+        .kandidat-content {
+            flex-grow: 1;
+            text-align: left;
+        }
+
+        .kandidat-content h4 {
+            margin-top: 0;
+            margin-bottom: 5px;
+            color: var(--primary-color);
+        }
+
+        .detail-info {
+            font-size: 13px;
+            line-height: 1.5;
+            margin-top: 5px;
+        }
+        .detail-info strong {
+            display: block;
+            margin-top: 8px;
+            color: #555;
+            font-weight: 600;
+        }
+        .detail-info ul {
+            padding-left: 20px;
+            margin-top: 5px;
+            margin-bottom: 0;
+            list-style-type: disc;
+        }
+
+        .modal { 
+            display: none; 
+            position: fixed; 
+            z-index: 1000; 
+            left: 0; 
+            top: 0; 
+            width: 100%; 
+            height: 100%; 
+            overflow: auto; 
+            background-color: rgba(0,0,0,0.6); 
+        }
+        .modal-content { 
+            background-color: #fefefe; 
+            margin: 10% auto; 
+            padding: 30px; 
+            border-radius: 10px;
+            width: 90%; 
+            max-width: 400px;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.3);
+            text-align: center;
+        }
+        .modal-content button {
+            width: 48%;
+            margin: 5px 1%;
+            display: inline-block;
+        }
+        .modal-content button.cancel {
+            background-color: #6c757d;
+        }
+        
+        #pilihan-review {
+            display: block;
+            padding: 10px;
+            background-color: #f8f9fa;
+            border-radius: 4px;
+            margin: 10px 0 20px;
+            color: var(--primary-color);
+            font-weight: bold;
+        }
+    </style>
+</head>
+<body>
+
+    <div class="container">
+        <div id="status-message"></div>
+
+        <div id="layer-nipd" class="layer">
+            <h2>🗳️ Verifikasi Pemilih</h2>
+            <p>Silakan masukkan Nomor Induk Pokok Anda:</p>
+            <input type="text" id="input-nipd" placeholder="Contoh: 12345" required>
+            <button onclick="validasiNipd()">Lanjutkan</button>
+        </div>
+
+        <div id="layer-pemilihan" class="layer" style="display: none;">
+            <h3 id="selamat-datang">Selamat Datang!</h3>
+            <p>Pilih salah satu pasangan calon di bawah ini:</p>
+            
+            <form id="form-pemilihan" class="kandidat-container">
+                
+                <div class="kandidat-item" id="item-paslon1">
+                    <div class="kandidat-input">
+                        <input type="radio" id="paslon1" name="kandidat" value="Paslon 1: Bunga & Doni" required onclick="selectKandidat('item-paslon1')">
+                    </div>
+                    <img src="paslon1.jpg" alt="Foto Paslon 1" class="foto-kandidat">
+                    <div class="kandidat-content">
+                        <h4>Pasangan Calon No. 1</h4>
+                        <p>Bunga Melati & Doni Saputra</p>
+                        <div class="detail-info">
+                            <strong>Visi:</strong> Mewujudkan OSIS yang berintegritas dan peduli lingkungan.
+                            <strong>Misi:</strong> Menjadi jembatan aspirasi siswa dan meningkatkan kegiatan ekstrakurikuler.
+                            <strong>Program Unggulan:</strong>
+                            <ul>
+                                <li>Pelatihan kepemimpinan digital.</li>
+                                <li>Proyek Kebersihan Hijau Sekolah.</li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="kandidat-item" id="item-paslon2">
+                    <div class="kandidat-input">
+                        <input type="radio" id="paslon2" name="kandidat" value="Paslon 2: Candra & Elma" onclick="selectKandidat('item-paslon2')">
+                    </div>
+                    <img src="paslon2.jpg" alt="Foto Paslon 2" class="foto-kandidat">
+                    <div class="kandidat-content">
+                        <h4>Pasangan Calon No. 2</h4>
+                        <p>Candra Kirana & Elma Sari</p>
+                        <div class="detail-info">
+                            <strong>Visi:</strong> Sekolah yang inovatif, berprestasi, dan berbudaya.
+                            <strong>Misi:</strong> Menciptakan kegiatan yang mendukung pengembangan bakat dan minat.
+                            <strong>Program Unggulan:</strong>
+                            <ul>
+                                <li>Lomba inovasi sains tahunan.</li>
+                                <li>Revitalisasi mading sekolah berbasis digital.</li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="kandidat-item" id="item-paslon3">
+                    <div class="kandidat-input">
+                        <input type="radio" id="paslon3" name="kandidat" value="Paslon 3: Fajar & Gina" onclick="selectKandidat('item-paslon3')">
+                    </div>
+                    <img src="paslon3.jpg" alt="Foto Paslon 3" class="foto-kandidat">
+                    <div class="kandidat-content">
+                        <h4>Pasangan Calon No. 3</h4>
+                        <p>Fajar Pratama & Gina Olivia</p>
+                        <div class="detail-info">
+                            <strong>Visi:</strong> Menjadikan siswa lebih aktif, kreatif, dan harmonis.
+                            <strong>Misi:</strong> Membangun komunikasi yang efektif antara siswa, guru, dan OSIS.
+                            <strong>Program Unggulan:</strong>
+                            <ul>
+                                <li>Pekan Seni dan Budaya.</li>
+                                <li>Program mentor sebaya akademik.</li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+                
+            </form>
+            
+            <button onclick="konfirmasiPilihan()">Submit Pilihan</button>
+
+            <input type="hidden" id="hidden-nipd">
+            <input type="hidden" id="hidden-nama">
+            <input type="hidden" id="hidden-kelas">
+        </div>
+
+        <div id="layer-sukses" class="layer" style="display: none;">
+            <h2>✅ Pemilihan Berhasil!</h2>
+            <p>Terima kasih atas partisipasi Anda. Suara Anda telah dicatat secara aman.</p>
+        </div>
+    </div>
+
+    <div id="konfirmasi-modal" class="modal">
+        <div class="modal-content">
+            <h3>Konfirmasi Pilihan</h3>
+            <p>Anda akan memilih:</p>
+            <strong id="pilihan-review"></strong>
+            <p>Yakin dengan pilihan ini? Pemilihan hanya bisa dilakukan sekali.</p>
+            <button onclick="submitPilihan()">Ya, Kirim</button>
+            <button onclick="tutupModal()" class="cancel">Ragu-ragu/Batal</button>
+        </div>
+    </div>
+    
+    <script>
+        const API_URL = 'https://script.google.com/macros/s/AKfycbwjdp91fZAglvGHreXlgqZmK5M8CzS28hKwaPYS5nBoY415ju7867zwAGuXDjqar_GKag/exec'; 
+        
+        function showStatus(message, isError = true) {
+            const statusDiv = document.getElementById('status-message');
+            statusDiv.textContent = message;
+            statusDiv.className = isError ? 'status-error' : 'status-success';
+        }
+        
+        function hideAllLayers() {
+            document.getElementById('layer-nipd').style.display = 'none';
+            document.getElementById('layer-pemilihan').style.display = 'none';
+            document.getElementById('layer-sukses').style.display = 'none';
+        }
+
+        function selectKandidat(itemId) {
+            document.querySelectorAll('.kandidat-item').forEach(item => {
+                item.classList.remove('selected');
+            });
+            document.getElementById(itemId).classList.add('selected');
+        }
+
+        async function validasiNipd() {
+            showStatus('');
+            const NIPD = document.getElementById('input-nipd').value.trim();
+            if (!NIPD) {
+                showStatus('NIPD tidak boleh kosong.', true);
+                return;
+            }
+
+            const dataToSend = new URLSearchParams({ action: 'validate', nipd: NIPD });
+
+            try {
+                const response = await fetch(API_URL, { method: 'POST', body: dataToSend });
+                const result = await response.json();
+
+                if (result.status === 'success') {
+                    showStatus(result.message, false);
+                    hideAllLayers();
+                    document.getElementById('layer-pemilihan').style.display = 'block';
+
+                    document.getElementById('hidden-nipd').value = result.data.nipd;
+                    document.getElementById('hidden-nama').value = result.data.nama;
+                    document.getElementById('hidden-kelas').value = result.data.kelas;
+                    
+                    document.getElementById('selamat-datang').textContent = `Selamat Datang, ${result.data.nama} (${result.data.kelas})!`;
+
+                } else {
+                    showStatus(result.message, true);
+                }
+            } catch (error) {
+                showStatus('Terjadi kesalahan koneksi. Cek jaringan atau Web App URL.', true);
+                console.error('Error:', error);
+            }
+        }
+
+        function konfirmasiPilihan() {
+            const selectedCandidate = document.querySelector('input[name="kandidat"]:checked');
+            if (!selectedCandidate) {
+                alert("Anda harus memilih salah satu kandidat.");
+                return;
+            }
+
+            document.getElementById('pilihan-review').textContent = selectedCandidate.value;
+            document.getElementById('konfirmasi-modal').style.display = 'block';
+        }
+
+        function tutupModal() {
+            document.getElementById('konfirmasi-modal').style.display = 'none';
+        }
+
+        async function submitPilihan() {
+            tutupModal();
+            showStatus('Mengirim data...', false);
+            
+            const selectedCandidate = document.querySelector('input[name="kandidat"]:checked');
+            
+            const dataToSubmit = new URLSearchParams({
+                action: 'submit',
+                nipd: document.getElementById('hidden-nipd').value,
+                nama: document.getElementById('hidden-nama').value,
+                kelas: document.getElementById('hidden-kelas').value,
+                pilihan: selectedCandidate.value 
+            });
+
+            try {
+                const response = await fetch(API_URL, { method: 'POST', body: dataToSubmit });
+                const result = await response.json();
+
+                if (result.status === 'success') {
+                    showStatus(result.message, false);
+                    hideAllLayers();
+                    document.getElementById('layer-sukses').style.display = 'block';
+                } else {
+                    showStatus(result.message, true);
+                }
+            } catch (error) {
+                showStatus('Terjadi kesalahan saat mengirim data. Cek jaringan atau Web App URL.', true);
+                console.error('Error:', error);
+            }
+        }
+    </script>
+
+</body>
+</html>
